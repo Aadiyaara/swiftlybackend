@@ -59,7 +59,7 @@ const RootMutation = new GraphQLObjectType({
                     timestamp: args.timestamp
                 })
                 console.log('Character Acquired: ', args.character)
-                return await SensorData.save()
+                return await sensorData.save()
             }
         }
     }
