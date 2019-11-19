@@ -30,7 +30,7 @@ const RootQuery = new GraphQLObjectType({
     name: 'RootQuery',
     fields: {
         getCharacter: {
-            type: GraphQLList(GraphQLString),
+            type: GraphQLList(SensorData),
             async resolve (parent, args, req) {
                 return await SensorData.find()
             }
