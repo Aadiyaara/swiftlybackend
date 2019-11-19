@@ -45,6 +45,7 @@ const RootMutation = new GraphQLObjectType({
             type: GraphQLNonNull(GraphQLString),
             async resolve (parent, args, req) {
                 await SensorData.remove()
+                return 'Done'
             }
         },
         sendCharacter: {
