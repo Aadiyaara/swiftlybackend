@@ -4,6 +4,7 @@ const mongoose = require('mongoose')
 
 // Schema
 const SensorData = require('../schema/models/SensorData')
+const User = require('../schema/models/User')
 
 // const bcrypt = require('bcryptjs')
 // const jwt = require('jsonwebtoken')
@@ -29,6 +30,32 @@ const AuthDataType = new GraphQLObjectType({
 const RootQuery = new GraphQLObjectType({
     name: 'RootQuery',
     fields: {
+        loginUser: {
+            type: GraphQLNonNull(AuthDataType),
+            args: {
+                email: {type: GraphQLNonNull(GraphQLString)},
+                password: {type: GraphQLNonNull(GraphQLString)}
+            },
+            async resolve(parent, args) {
+                try {
+                    const user = await User.findOne({ email: args.email })
+                    if(!user) {
+                        console.log('User does not Exist')
+                        throw new Error('User does not exist')
+                    }
+                    const isEqual = await bcrypt.compare(args.password, user.tokenizedPassword)
+                    if(!isEqual) throw new Error('Invalid Password')
+                    const token = jwt.sign({userId: user.id}, 'ninenine', {
+                        expiresIn: '8760h'
+                    })
+                    return { userId: user.id, token: token, tokenExpiration: 8760 }
+                }
+                catch (err) {
+                    console.log('Error loggin in the user: ', err)
+                    return err
+                }
+            }
+        },
         getCharacter: {
             type: GraphQLList(SensorDataType),
             async resolve (parent, args, req) {
@@ -61,6 +88,38 @@ const RootMutation = new GraphQLObjectType({
                 })
                 console.log('Character Acquired: ', args.character)
                 return await sensorData.save()
+            }
+        },
+        createUser: {
+            type: AuthDataType,
+            args: {
+                name: {type: GraphQLNonNull(GraphQLString)},
+                email: {type: GraphQLNonNull(GraphQLString)},
+                password: {type: GraphQLNonNull(GraphQLString)}
+            },
+            async resolve(parent, args) {
+                try {
+                    const user = await User.findOne({ email: args.email })
+                    if(user) {
+                        throw new Error('User exists already')
+                    }
+                    const hashedPassword = await bcrypt.hash(args.password, 12)
+                    const newUser = new User({
+                        name: args.name,
+                        email: args.email,
+                        tokenizedPassword: hashedPassword,
+                        status: 'Active'
+                    })
+                    const savedUser = await newUser.save()
+                    const token = jwt.sign({userId: savedUser.id}, 'ninenine', {
+                        expiresIn: '8760h'
+                    })
+                    return { userId: savedUser.id, token: token, tokenExpiration: 8760 }
+                }
+                catch (err) {
+                    console.log('Error Creating a new User')
+                    return err
+                }
             }
         }
     }
