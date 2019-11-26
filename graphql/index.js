@@ -6,8 +6,8 @@ const mongoose = require('mongoose')
 const SensorData = require('../schema/models/SensorData')
 const User = require('../schema/models/User')
 
-// const bcrypt = require('bcryptjs')
-// const jwt = require('jsonwebtoken')
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
 const SensorDataType = new GraphQLObjectType({
     name: 'SensorData',
